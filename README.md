@@ -5,6 +5,12 @@ StackOverflow Cockpit
 
 This app collects un-answered values from my-tags. It adds them to a cassandra database and provides a simple web ui for users to mark posts internally as dastastax_closed.
 
+Pull the repo
+```
+git clone https://github.com/phact/so_cockpit.git
+```
+
+
 First create your schema and stuff:
 ```
 cqlsh setup.cql
