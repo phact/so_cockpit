@@ -141,7 +141,7 @@ var pullData = function(){
 						if (rowData.datastax_close == undefined || rowData.datastax_close == false){
 							row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Mark Closed</td>"));
 						}else{ 
-							row.append($("<td>Closed</td>"));
+							row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Closed</td>"));
 						}
 
 					}
@@ -164,7 +164,14 @@ function closePost(isanswered, answercount, questionid, createdate){
 	d.setSeconds(createdate);
 	d =d.getFullYear() +'-'+ (d.getMonth()+1) +'-'+ d.getDate()+"T"+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()+"Z";
 
-	myData = '{"add":{ "doc":{"datastax_close":'+true+
+
+	if ($("#row"+questionid).html()=="Closed"){
+		datastax_close = false;
+	}else{
+		datastax_close = true;
+	}
+
+	myData = '{"add":{ "doc":{"datastax_close":'+datastax_close+
 	',"isanswered":false'+    
 	',"answercount":'+answercount+    
 	',"questionid":'+questionid+    
@@ -178,8 +185,12 @@ function closePost(isanswered, answercount, questionid, createdate){
 		data: myData
 	}).done(function(data) { 
 		console.log(JSON.stringify(data));
+		if (!datastax_close){
+			$("#row"+questionid).html("Mark Closed");
 
-		$("#row"+questionid).html("Closed");
+		}else{
+			$("#row"+questionid).html("Closed");
+		}
 	}
 	);
 
