@@ -85,12 +85,12 @@ var url = 'https://api.stackexchange.com/2.2/questions/unanswered/my-tags?key=PP
 						' }}}';
 
 						myAjaxCall = $.ajax({
-							url: "http://localhost:3001/127.0.0.1:8983/solr/so_tracker.posts/update?wt=json",
+							url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?wt=json",
 							type: "POST", 
 							contentType: "application/json",
 							data: myData
 							}).done(function(data) { 
-								//console.log("posted "+myData);
+								console.log("posted "+myData);
 							}
 							);
 
@@ -111,11 +111,11 @@ var url = 'https://api.stackexchange.com/2.2/questions/unanswered/my-tags?key=PP
 								//query solr has it been internally closed?
 								var checkQuery = $.ajax({
 									type:'GET',
-									url:"http://localhost:3001/127.0.0.1:8983/solr/so_tracker.posts/select?q=questionid:"+data[i].question_id+"&wt=json",
+									url:"http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/select?q=questionid:"+data[i].question_id+"&wt=json",
 									async:false,
 									contentType: 'application/json',
 									success:function(resp){
-										if (resp.response.docs[0].datastax_close != undefined){
+										if (resp.response.docs.length != 0 && resp.response.docs[0].datastax_close != undefined){
 											result[i].datastax_close = resp.response.docs[0].datastax_close;
 										}
 										drawRow(result[i]);
@@ -169,7 +169,7 @@ var url = 'https://api.stackexchange.com/2.2/questions/unanswered/my-tags?key=PP
 					' }}}';
 
 					myAjaxCall = $.ajax({
-						url: "http://localhost:3001/127.0.0.1:8983/solr/so_tracker.posts/update?wt=json",
+						url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?replacefields=false&wt=json",
 						type: "POST", 
 						contentType: "application/json",
 						data: myData
