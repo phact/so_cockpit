@@ -49,12 +49,12 @@ var pullData = function(){
 	$.ajax({
 		type: 'GET',
 		url: geturl,
-		async: false,
+		async: true,
 		jsonpCallback: 'jsonCallback',
 		contentType: "application/json",
 		dataType: 'jsonp',
 		success: function(data) {
-			result = $.merge(result, data.items);
+			result = result.concat(data.items);
 			if (data.has_more == true){
 				pullData();
 			}
@@ -62,99 +62,108 @@ var pullData = function(){
 				//Paste length
 				$("#myfooter").html("Currently there are "+result.length+" questions in SO");
 				
+
+				//create the table -- populate later
+               // drawTable(result);
+				
 				for (i=0;i<result.length;i++){
 
 					//query solr has it been internally closed?
 					var checkQuery = $.ajax({
 						type:'GET',
 						url:"http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/select?q=questionid:"+result[i].question_id+"&wt=json",
-						async:false,
+						async:true,
 						contentType: 'application/json',
 						success:function(resp){
-							if (resp.response.docs[0].datastax_close != undefined){
-								result[i].datastax_close = resp.response.docs[0].datastax_close;
+							
+							if (resp.response.docs[0] != undefined){
+								var j = $.map(result, function (x, index){ 
+									if (x.question_id == resp.response.docs[0].questionid) { 
+										return index;
+									}
+								})[0];
+								
+								result[j].datastax_close = resp.response.docs[0].datastax_close;
 							} else
 							{
-								result[i].datastax_close = false;
+								var j = $.map(result, function (x, index){
+									if (x.question_id == resp.responseHeader.params.q.split(":")[1]){
+										return index;
+									}
+								})[0];
+								result[j].datastax_close = false;
 							}
-						}
-					}
-					);
 
-
-					//Insert all posts into c*
-					var d = new Date(0);
-					d.setSeconds(result[i].creation_date);
-
-					d =d.getFullYear() +'-'+ (d.getMonth()+1) +'-'+ d.getDate()+"T"+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()+"Z";
-					myData = '{"add":{ "doc":{"isanswered":'+result[i].is_answered+
-					', "createdate": '+'"'+d+'"'+
-					', "datastax_close": '+result[i].datastax_close+
-					', "answercount":'+result[i].answer_count+
-					',"questionid":'+result[i].question_id+
-					', "ownerreputation":'+result[i].owner.reputation+
-					', "owneruserid":'+result[i].owner.user_id+
-					', "ownerdisplayname":"'+result[i].owner.display_name+
-					'", "ownerlink":"'+result[i].owner.link+
-					'", "view_count":'+result[i].view_count+
-					',"score":'+result[i].score+
-					', "link":"'+result[i].link+'"'+
-					', "title":"'+result[i].title+'"'+
-					', "tags":'+''+JSON.stringify(result[i].tags)+''+
-					//				'", owneracceptrate":'+result[i].owner.accept_rate+
-					' }}}';
-
-					myAjaxCall = $.ajax({
-						url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?wt=json",
-						type: "POST", 
-						contentType: "application/json",
-						data: myData
-					}).done(function(data) { 
-							//console.log("posted "+myData);
-						}
-						);
-
+                            //Insert all posts into c*
+                            var d = new Date(0);
+                            d.setSeconds(result[j].creation_date);
+                            d =d.getFullYear() +'-'+ (d.getMonth()+1) +'-'+ d.getDate()+"T"+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()+"Z";
+                            myData = '{"add":{ "doc":{"isanswered":'+result[j].is_answered+
+                            ', "createdate": '+'"'+d+'"'+
+                            ', "datastax_close": '+result[j].datastax_close+
+                            ', "answercount":'+result[j].answer_count+
+                            ',"questionid":'+result[j].question_id+
+                            ', "ownerreputation":'+result[j].owner.reputation+
+                            ', "owneruserid":'+result[j].owner.user_id+
+                            ', "ownerdisplayname":"'+result[j].owner.display_name+
+                            '", "ownerlink":"'+result[j].owner.link+
+                            '", "view_count":'+result[j].view_count+
+                            ',"score":'+result[j].score+
+                            ', "link":"'+result[j].link+'"'+
+                            ', "title":"'+result[j].title+'"'+
+                            ', "tags":'+''+JSON.stringify(result[j].tags)+''+
+                            ' }}}';
+                            myAjaxCall = $.ajax({
+                            	url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?wt=json",
+                            	type: "POST",
+                            	contentType: "application/json",
+                            	data: myData
+                            }).done(function(data) {
+                                            drawRow(result[j]);
+                            });
+                        }
+                    });
 				}
-
-				drawTable(result);
 
 				function drawTable(data) {
 
-					$(".ui-content").append("<table  data-role='table' id='soTable' />");
-					$("#soTable").append("<th>Title</th>")
-					$("#soTable").append("<th>Owner</th>")
-					$("#soTable").append("<th>Tags</th>")
-					$("#soTable").append("<th>Close</th>")
+					$(".ui-content").append("Sort by"+
+                				"<a href='#sort' class='sort-column' data-index='0'>Title</a> |"+
+                				"<a href='#sort' class='sort-column' data-index='1'>Owner</a> |"+
+                				"<a href='#sort' class='sort-column' data-index='2'>Tags</a> |"+
+                				"<a href='#sort' class='sort-column' data-index='3'>Close</a> |"+
+						"<table class='table demo default footable-loaded footable' id='soTable' ><thead><tr></tr></thead></table>");
+					$("#soTable thead tr").append("<th class='footable-first-column footable-sortable footable-sorted' data-sort-initial='true'>Title<span class='footable-sort-indicator'></span></th>")
+					$("#soTable thead tr").append("<th class='footable-sortable'>Owner</th>")
+					$("#soTable thead tr").append("<th class='footable-sortable'>Tags</th>")
+					$("#soTable thead tr").append("<th class='footable-sortable'>Close</th>")
 
-					for (var i = 0; i < data.length; i++) {
-						drawRow(result[i]);
-					}
 				}
 
 				function drawRow(rowData) {
-						// drop in html
-						var row = $("<tr />")
-						$("#soTable").append(row); //this will append tr element to table... keep its reference for a while since we will add cels into it
-						row.append($("<td><a href='"+rowData.link+"'target='_blank'  >" + rowData.title + "</a></td>"));
-						row.append($("<td>" + rowData.owner.display_name + "</td>"));
-						row.append($("<td>" + rowData.tags + "</td>"));
-						if (rowData.datastax_close == undefined || rowData.datastax_close == false){
-							row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Mark Closed</td>"));
-						}else{ 
-							row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Closed</td>"));
-						}
-
+					// drop in html
+					var row = $("<tr />")
+					$("#soTable").append(row); //this will append tr element to table... keep its reference for a while since we will add cels into it
+					row.append($("<td><a href='"+rowData.link+"'target='_blank'  >" + rowData.title + "</a></td>"));
+					row.append($("<td>" + rowData.owner.display_name + "</td>"));
+					row.append($("<td>" + rowData.tags + "</td>"));
+					if (rowData.datastax_close == undefined || rowData.datastax_close == false){
+						row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Mark Closed</td>"));
+					}else{ 
+						row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Closed</td>"));
 					}
 
 				}
 
-				page = page+1;
-
-			},
-			error: function(e) {
-				console.log(e.message);
 			}
-		});
+		},
+		error: function(e) {
+			console.log(e.message);
+		}
+
+	});
+
+	page = page+1;
 
 }
 
@@ -184,7 +193,6 @@ function closePost(isanswered, answercount, questionid, createdate){
 		contentType: "application/json",
 		data: myData
 	}).done(function(data) { 
-		console.log(JSON.stringify(data));
 		if (!datastax_close){
 			$("#row"+questionid).html("Mark Closed");
 
@@ -198,3 +206,19 @@ function closePost(isanswered, answercount, questionid, createdate){
 
 pullData();
 
+    (function($) {
+      $(function() {
+        $('table').footable();
+            $('.sort-column').click(function (e) {
+                e.preventDefault();
+
+                //get the footable sort object
+                var footableSort = $('table').data('footable-sort');
+
+                //get the index we are wanting to sort by
+                var index = $(this).data('index');
+
+                footableSort.doSort(index, 'toggle');
+            });
+      })
+    })(jQuery);
