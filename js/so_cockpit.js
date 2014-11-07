@@ -60,7 +60,7 @@ var pullData = function(){
 			}
 			else{
 				//Paste length
-				$("#myfooter").html("Currently there are "+result.length+" questions in SO");
+				$("#myfooter").html("Currently there are "+result.length+" unanswered questions in SO");
 				
 
 				//create the table -- populate later
@@ -125,8 +125,9 @@ var pullData = function(){
                     });
 				}
 
-				function drawTable(data) {
 
+				//not currently being used
+				function drawTable(data) {
 					$(".ui-content").append("Sort by"+
                 				"<a href='#sort' class='sort-column' data-index='0'>Title</a> |"+
                 				"<a href='#sort' class='sort-column' data-index='1'>Owner</a> |"+
@@ -152,6 +153,9 @@ var pullData = function(){
 					}else{ 
 						row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Closed</td>"));
 					}
+					var myDate = new Date(0);
+					myDate.setSeconds(rowData.creation_date);
+					row.append($("<td data-value='" + rowData.creation_date + "'>"+  (myDate.getMonth()+1)+'/'+  myDate.getDate()+'/'+ myDate.getFullYear()+" "+myDate.getHours()+":"+ ((myDate.getMinutes()<10)? ("0"+myDate.getMinutes()) : myDate.getMinutes()) +"</td>"));
 
 				}
 
