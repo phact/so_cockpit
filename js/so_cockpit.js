@@ -76,7 +76,7 @@ var pullData = function(){
 						contentType: 'application/json',
 						success:function(resp){
 							
-							if (resp.response.docs[0] != undefined){
+							if (resp.response.docs[0] != undefined && resp.response.docs[0].datastax_close != undefined){
 								var j = $.map(result, function (x, index){ 
 									if (x.question_id == resp.response.docs[0].questionid) { 
 										return index;
@@ -93,6 +93,10 @@ var pullData = function(){
 								})[0];
 								result[j].datastax_close = false;
 							}
+			    result[j].comment = "";
+			    if (resp.response.docs[0].comment != undefined){
+			   	result[j].comment = resp.response.docs[0].comment;
+			    }
 
                             //Insert all posts into c*
                             var d = new Date(0);
@@ -101,6 +105,7 @@ var pullData = function(){
                             myData = '{"add":{ "doc":{"isanswered":'+result[j].is_answered+
                             ', "createdate": '+'"'+d+'"'+
                             ', "datastax_close": '+result[j].datastax_close+
+                            ', "comment":"'+result[j].comment+'"'+
                             ', "answercount":'+result[j].answer_count+
                             ',"questionid":'+result[j].question_id+
                             ', "ownerreputation":'+result[j].owner.reputation+
@@ -149,13 +154,18 @@ var pullData = function(){
 					row.append($("<td>" + rowData.owner.display_name + "</td>"));
 					row.append($("<td>" + rowData.tags + "</td>"));
 					if (rowData.datastax_close == undefined || rowData.datastax_close == false){
-						row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Mark Closed</td>"));
+						row.append($("<td id='row"+rowData.question_id+"' onclick='updatePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+",\"close\")'>Mark Closed</td>"));
 					}else{ 
-						row.append($("<td id='row"+rowData.question_id+"' onclick='closePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+")'>Closed</td>"));
+						row.append($("<td id='row"+rowData.question_id+"' onclick='updatePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+",\"close\")'>Closed</td>"));
 					}
 					var myDate = new Date(0);
 					myDate.setSeconds(rowData.creation_date);
+					var myComment="";
+					if (rowData.comment != undefined){
+						myComment = rowData.comment;
+					}
 					row.append($("<td data-value='" + rowData.creation_date + "'>"+  (myDate.getMonth()+1)+'/'+  myDate.getDate()+'/'+ myDate.getFullYear()+" "+myDate.getHours()+":"+ ((myDate.getMinutes()<10)? ("0"+myDate.getMinutes()) : myDate.getMinutes()) +"</td>"));
+					row.append($("<td> <input id='comment"+rowData.question_id+"' onblur='updatePost("+rowData.isanswered+","+rowData.answer_count+","+rowData.question_id+","+rowData.creation_date+",\"comment\""+")' value ='"+myComment+"'></input></td>"));
 
 				}
 
@@ -171,24 +181,36 @@ var pullData = function(){
 
 }
 
-function closePost(isanswered, answercount, questionid, createdate){
+function updatePost(isanswered, answercount, questionid, createdate, source){
 	//Here's where we write to c* to internally close a post
 	var d = new Date(0);
 	d.setSeconds(createdate);
 	d =d.getFullYear() +'-'+ (d.getMonth()+1) +'-'+ d.getDate()+"T"+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()+"Z";
-
-
-	if ($("#row"+questionid).html()=="Closed"){
-		datastax_close = false;
+	
+	//this is overly verbose. Switch close if it's a close.
+	if (source == 'close'){
+		if ($("#row"+questionid).html()=="Closed"){
+			datastax_close = false;
+		}else{
+			datastax_close = true;
+		}
 	}else{
-		datastax_close = true;
+                if ($("#row"+questionid).html()=="Closed"){
+                        datastax_close = true;
+                }else{
+                        datastax_close = false;
+                }
 	}
+
+	
+        comment = $("#comment"+questionid).val()
 
 	myData = '{"add":{ "doc":{"datastax_close":'+datastax_close+
 	',"isanswered":false'+    
 	',"answercount":'+answercount+    
 	',"questionid":'+questionid+    
-	',"createdate":"'+d+'"'+    
+	',"createdate":"'+d+'"'+
+	',"comment":"'+comment+'"'+
 	' }}}';
 
 	myAjaxCall = $.ajax({
@@ -203,10 +225,13 @@ function closePost(isanswered, answercount, questionid, createdate){
 		}else{
 			$("#row"+questionid).html("Closed");
 		}
+		$("#comment"+questionid).css("color", "cornflowerblue");
 	}
 	);
 
 }
+
+
 
 pullData();
 

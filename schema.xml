@@ -16,6 +16,7 @@
 		<field indexed="true" multiValued="false" name="questionid" stored="true" type="TrieIntField"/>
 		<field indexed="true" multiValued="false" name="ownerlink" stored="true" type="TextField"/>
 		<field indexed="true" multiValued="false" name="datastax_close" stored="true" type="BoolField"/>
+		<field indexed="true" multiValued="false" name="comment" stored="true" type="TextField"/>
 		<field indexed="true" multiValued="false" name="score" stored="true" type="TrieIntField"/>
 		<field indexed="true" multiValued="false" name="view_count" stored="true" type="TrieIntField"/>
 		<field indexed="true" multiValued="false" name="title" stored="true" type="TextField"/>
