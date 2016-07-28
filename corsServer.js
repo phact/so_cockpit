@@ -1,7 +1,7 @@
- var host = process.env.PORT || '192.168.1.7';
+ var host = process.env.PORT || 'localhost';
  var port = process.env.PORT || 3001;
 
-var cors_proxy = require('cors-anywhere');
+var cors_proxy = require('./lib/cors-anywhere');
 cors_proxy.createServer({
     removeHeaders: ['cookie', 'cookie2']
 }).listen(port, host, function() {

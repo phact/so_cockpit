@@ -71,7 +71,7 @@ var pullData = function(){
 					//query solr has it been internally closed?
 					var checkQuery = $.ajax({
 						type:'GET',
-						url:"http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/select?q=questionid:"+result[i].question_id+"&wt=json",
+						url:"http://localhost:3001/localhost:8983/solr/so_tracker.posts/select?q=questionid:"+result[i].question_id+"&wt=json",
 						async:true,
 						contentType: 'application/json',
 						success:function(resp){
@@ -119,7 +119,7 @@ var pullData = function(){
                             ', "tags":'+''+JSON.stringify(result[j].tags)+''+
                             ' }}}';
                             myAjaxCall = $.ajax({
-                            	url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?wt=json",
+                            	url: "http://localhost:3001/localhost:8983/solr/so_tracker.posts/update?wt=json",
                             	type: "POST",
                             	contentType: "application/json",
                             	data: myData
@@ -214,7 +214,7 @@ function updatePost(isanswered, answercount, questionid, createdate, source){
 	' }}}';
 
 	myAjaxCall = $.ajax({
-		url: "http://www.sestevez.com:3001/192.168.1.7:8983/solr/so_tracker.posts/update?wt=json",
+		url: "http://localhost:3001/localhost:8983/solr/so_tracker.posts/update?wt=json",
 		type: "POST", 
 		contentType: "application/json",
 		data: myData
