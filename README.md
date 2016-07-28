@@ -13,7 +13,7 @@ git clone https://github.com/phact/so_cockpit.git
 
 First create your schema and stuff:
 ```
-cqlsh setup.cql
+cqlsh -f setup.cql
 ```
 
 
