@@ -14,6 +14,7 @@ git clone https://github.com/phact/so_cockpit.git
 First create your schema and stuff:
 ```
 cqlsh -f setup.cql
+dsetool create_core so_tracker.posts reindex=true generateResources=true
 ```
 
 
